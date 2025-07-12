@@ -1,0 +1,296 @@
+#Readme Paper uvarum: 10/07/2025
+#Parto con 98 reads de cepas de todo el mundo con las tres tecnologías incluidas. A su vez tenemos una nueva cepa tipo ensamblada y anotada, con lo cuál debo partir de esta para los mapeos
+
+
+/media/uncopc23/Datos/PaperUvarum
+Descomprimo el nuevo ensamblado de la cepa tipo
+unzip CBS7001_ensamble.zip
+
+#Para indezar armo la carpeta, indexo la cepa tipo y comienzo a mapear las 75 reads
+
+STAR --version #2.7.10a
+
+mkdir MAPCBS7001
+STAR --runMode genomeGenerate --genomeDir MAPCBS7001 --genomeFastaFiles /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/CBS7001_ensamble/data/GCA_027557585.1/GCA_027557585.1_ASM2755758v1_genomic.fna --runThreadN 8 --genomeSAindexNbases 10
+
+#Mapeo mis cepas, primero para las cepas de Illumina pair end lo ejecuto desde /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/SuvarumNPCC
+
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn yHQL700_Saccharomyces_uvarum_ATTACTCG-TATAGCCT_L007_R1_001.fastq.gz yHQL700_Saccharomyces_uvarum_ATTACTCG-TATAGCCT_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/prejix. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+
+#Armé un comando para automatizar que se llama mapea_star.sh. Con este script lo que hace es ir cambiando el mapeo en todas las cepas que tengan asociados dos archivos con el nombre R1 y R2.
+=========================================================================
+#!/bin/bash
+
+# Rutas definidas por vos
+FASTQ_DIR="/media/uncopc23/Datos/PaperUvarum/FASTQ_completo/SuvarumNPCC"
+GENOME_DIR="/media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001"
+OUTPUT_DIR="/media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001"
+
+# Script para mapear todas las cepas automáticamente
+cd "$FASTQ_DIR"
+
+for R1 in *_R1_001.fastq.gz; do
+    # Obtener el nombre base antes del primer guion bajo
+    prefix=$(echo "$R1" | cut -d'_' -f1)
+    
+    # Detectar el R2 correspondiente
+    R2=$(echo "$R1" | sed 's/_R1_/_R2_/')
+
+    echo "Procesando muestra: $prefix"
+
+    STAR --runThreadN 16 \
+    --genomeDir "$GENOME_DIR" \
+    --readFilesIn "$FASTQ_DIR/$R1" "$FASTQ_DIR/$R2" \
+    --readFilesCommand zcat \
+    --outFileNamePrefix "$OUTPUT_DIR/${prefix}." \
+    --outSAMtype BAM SortedByCoordinate \
+    --outSAMmode NoQS \
+    --alignIntronMax 500
+
+done
+============================================================================
+#para ejecuttarlo debo estar dentro de la carpeta del FASTQ_DIR en este caso /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/SuvarumNPCC
+#le doy los permisos
+chmod +x mapear_star.sh
+#ejecuto bash
+./mapear_star.sh
+#con este script me va generando en la carpeta MAPCBS7001 todos los mapeos
+#Hago lo mismo para la carpeta /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/suvarum_españa Sin embargo como tienen nombres distintos le tuve que cambiar levemente el comando al script y tambièn cambiar la dirección del FASTQ_DIR
+
+
+#a las cepas que son pair end las mapeo a mano una por una
+
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119150.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CRUB1778. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119156.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CRUB1586. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119155.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CRUB1782. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119152.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CRUB1783. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119168.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/ZP963. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119170.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/ZP966. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119180.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/UCD61137. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119178.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CBS377. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119158.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CRUB1566. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SRR1119157.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CRUB1572. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+STAR --runThreadN 16 --genomeDir /MAPCBS7001 --readFilesIn SRR1119150.fastq --readFilesCommand cat --outFileNamePrefix /MAPCBS7001. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+
+#largo manualmente algunas que no salieron xq hay que ampliar memoria
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1005_S13_L007_R1_001.fastq.gz 1005_S13_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/ZIM2122. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500
+#Para los datos de españa y algunas de chile necesto mucha memoria, por eso ajuste el comando sino salta error. ver de armar un bash para automatizar esto
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1005_S13_L007_R1_001.fastq.gz 1005_S13_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/ZIM2122. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn CL1605_R1.fastq CL1605_R2.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CL1605. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn CL1603_R1.fastq CL1603_R2.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CL1603. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn CL1602_R1.fastq CL1602_R2.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CL1602. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn CL1207_R1.fastq CL1207_R2.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CL1207. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 32000000000
+
+
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1148_S17_L007_R1_001.fastq.gz 1148_S17_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT12922. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 32000000000
+
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1203_S24_L007_R1_001.fastq.gz  1203_S24_L007_R2_001.fastq.gz  --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CBS2898. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 32000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 2812_S41_L007_R1_001.fastq.gz 2812_S41_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1288. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 32000000000
+
+#largado
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 106_S3_L007_R1_001.fastq.gz 106_S3_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT10174. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 32000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 2872_S46_L007_R1_001.fastq.gz 2872_S46_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/Rag20112. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 32000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 2812_S41_L007_R1_001.fastq 2812_S41_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1288. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 12000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 75_S1_L007_R1_001.fastq 75_S1_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT1369. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 12000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 3032_S55_L007_R1_001.fastq 3032_S55_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1418. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 32000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 993_S11_L007_R1_001.fastq 993_S11_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NCAIM868. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn S10-2_S13.trim.R1.fastq S10-2_S13.trim.R2.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/S10. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn ZIMC-2113_S7.trim.R1.fastq ZIMC-2113_S7.trim.R2.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/ZIM2113. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn SERIDA78-1_S16_.R1.fastq SERIDA78-1_S16_.R2.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/SERIDA78. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 3031_S54_L007_R1_001.fastq 3031_S54_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1417. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 2874_S48_L007_R1_001.fastq 2874_S48_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/Rag20225. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 2873_S47_L007_R1_001.fastq 2873_S47_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/Rag20125. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1805_S30_L007_R1_001.fastq 1805_S30_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/IIICF20. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1615_S28_L007_R1_001.fastq 1615_S28_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CBS431. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1611_S27_L007_R1_001.fastq 1611_S27_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT10618. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 2089_S31_L007_R1_001.fastq 2089_S31_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/IKM13. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1185_S23_L007_R1_001.fastq 1185_S23_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/S20. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1181_S20_L007_R1_001.fastq 1181_S20_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/S20. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1150_S18_L007_R1_001.fastq 1150_S18_L007_R2_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT12930. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn CL1105_R1.fastq CL1105_R2.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CL1105. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn CL309_R1.fastq CL309_R2.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CL309. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000
+
+#mapeo single end los que están arruinados el par R2 ya que el R1 se puede usar. #sin largar
+                             
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1125_S14_L007_R1_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT12627. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000    
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 994_S12_L007_R1_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NCAIM789. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 2822_S43_L007_R1_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1311. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1183_S22_L007_R1_001.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/S14. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1128_S16_L007_R1_001.fastq  --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT12669. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000        
+
+#largados #archivos que tiene dañado el R1, largo con R2
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1203_S24_L007_R1_001.fastq  --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CBS2898. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 8 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1148_S17_L007_R1_001.partial.fastq --readFilesCommand cat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT12922. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 8 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 76_S2_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT1884. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 2831_S44_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1330. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 2815_S42_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1293. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 1127_S15_L007_R2_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/CECT12638. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+
+
+
+    
+#los archivos de espña que se descargaron mal o incompletos voy a tratar de recuperar el archivo mas grande y tratarlos como single end y ver el porcentaje de mapeo.
+el que mejor cover
+zcat 1148_S17_L007_R1_001.fastq.gz > 1148_S17_L007_R1_001.partial.fastq
+zcat 1148_S17_L007_R2_001.fastq.gz > 1148_S17_L007_R2_001.partial.fastq
+seqkit stats 1148_S17_L007_R1_001.partial.fastq
+seqkit stats 1148_S17_L007_R2_001.partial.fastq
+
+file                                format  type    num_seqs        sum_len  min_len  avg_len  max_len
+1148_S17_L007_R1_001.partial.fastq  FASTQ   DNA   19,250,727  2,639,510,358       35    137.1      151 (mapeo con R1parcial)
+file                                format  type    num_seqs        sum_len  min_len  avg_len  max_len
+1148_S17_L007_R2_001.partial.fastq  FASTQ   DNA   12,823,924  1,755,734,548        0    136.9      151
+
+
+zcat 994_S12_L007_R1_001.fastq.gz > 994_S12_L007_R1_001.partial.fastq.gz 
+zcat 994_S12_L007_R2_001.fastq.gz > 994_S12_L007_R2_001.partial.fastq.gz 
+seqkit stats 994_S12_L007_R1_001.partial.fastq.gz
+seqkit stats 994_S12_L007_R2_001.partial.fastq.gz
+
+gzip: 994_S12_L007_R2_001.fastq.gz: unexpected end of file
+file                                  format  type    num_seqs        sum_len  min_len  avg_len  max_len
+994_S12_L007_R1_001.partial.fastq.gz  FASTQ   DNA   13,010,213  1,876,430,241       35    144.2      151
+file                                  format  type   num_seqs        sum_len  min_len  avg_len  max_len
+994_S12_L007_R2_001.partial.fastq.gz  FASTQ   DNA   8,114,697  1,168,437,942        0      144      151
+
+
+STAR --runThreadN 16 --genomeDir /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001 --readFilesIn 994_S12_L007_R1_001.fastq.gz --readFilesCommand zcat --outFileNamePrefix /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NCAIM789. --outSAMtype BAM SortedByCoordinate --outSAMmode NoQS --alignIntronMax 500 --limitBAMsortRAM 24000000000 
+
+zcat 76_S2_L007_R1_001.fastq.gz > 76_S2_L007_R1_001.partial.fastq.gz
+zcat 76_S2_L007_R2_001.fastq.gz > 76_S2_L007_R2_001.partial.fastq.gz
+seqkit stats 76_S2_L007_R1_001.partial.fastq.gz
+seqkit stats 76_S2_L007_R2_001.partial.fastq.gz
+gzip: 2871_S45_L007_R1_001.fastq.gz: unexpected end of file
+file                                   format  type    num_seqs        sum_len  min_len  avg_len  max_len
+2871_S45_L007_R2_001.partial.fastq.gz  FASTQ   DNA   16,958,653  2,428,324,005       35    143.2      151
+file                                   format  type    num_seqs        sum_len  min_len  avg_len  max_len
+2871_S45_L007_R2_001.partial.fastq.gz  FASTQ   DNA   16,958,653  2,428,324,005       35    143.2      151
+#si bien avisa que esta dañado R1, pero ambos archivos tiene simetría y equidad
+vuelvo a mapear pero con ambos archivos parti R1 y R2 para probar. No funcionó el mapeo, vulevo a porbar mapeando single end con R2 solo
+
+
+#ahora me falta mapear los archivos PacBIO BR2-2 NPCC1314
+minimap2 -ax map-pb --secondary=no --sam-hit-only /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/CBS7001_ensamble/data/GCA_027557585.1/GCA_027557585.1_ASM2755758v1_genomic.fna SRR16842835.fastq > /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1314.sam
+#ahora hay q pasar el .sam a bam e indexar para poder visualizar en igv. hay q escribir toda la ruta aunque estemos parados en esa carpeta xq sino no lo acepta
+samtools sort /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1314.sam -o /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1314.sorted.bam
+samtools index /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/NPCC1314.sorted.bam
+
+
+minimap2 -ax map-pb --secondary=no --sam-hit-only /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/CBS7001_ensamble/data/GCA_027557585.1/GCA_027557585.1_ASM2755758v1_genomic.fna SRR16975214.fastq > /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/BR6_2.sam
+samtools sort /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/BR6_2.sam -o /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/BR6_2.sorted.bam
+samtools index /media/uncopc23/Datos/PaperUvarum/FASTQ_completo/MAPCBS7001/BR6_2.sorted.bam
+
+
+#me preparo para indexar así puedo visualizar en el igv como van saliendo los mapeos
+
+ls -1 *.Aligned.sortedByCoord.out.bam
+
+samtools index 
+samtools index BMV58.Aligned.sortedByCoord.out.bam
+samtools index CBS377.Aligned.sortedByCoord.out.bam
+samtools index CECT12600.Aligned.sortedByCoord.out.bam
+samtools index CECT1969.Aligned.sortedByCoord.out.bam
+samtools index CID1.Aligned.sortedByCoord.out.bam
+samtools index CL1207.Aligned.sortedByCoord.out.bam
+samtools index CL1602.Aligned.sortedByCoord.out.bam
+samtools index CL1603.Aligned.sortedByCoord.out.bam
+samtools index CL1605.Aligned.sortedByCoord.out.bam
+samtools index CRUB1566.Aligned.sortedByCoord.out.bam
+
+samtools index CRUB1572.Aligned.sortedByCoord.out.bam
+samtools index CRUB1586.Aligned.sortedByCoord.out.bam
+samtools index CRUB1778.Aligned.sortedByCoord.out.bam
+samtools index CRUB1782.Aligned.sortedByCoord.out.bam
+samtools index CRUB1783.Aligned.sortedByCoord.out.bam
+samtools index CRUB1989.Aligned.sortedByCoord.out.bam
+samtools index CRUB1990.Aligned.sortedByCoord.out.bam
+samtools index CRUB1991.Aligned.sortedByCoord.out.bam
+samtools index CRUB1994.Aligned.sortedByCoord.out.bam
+samtools index PM12.Aligned.sortedByCoord.out.bam
+
+samtools index S6U.Aligned.sortedByCoord.out.bam
+samtools index UCD61137.Aligned.sortedByCoord.out.bam
+samtools index yHQL700.Aligned.sortedByCoord.out.bam
+samtools index yHQL701.Aligned.sortedByCoord.out.bam
+samtools index yHQL703.Aligned.sortedByCoord.out.bam
+samtools index yHQL704.Aligned.sortedByCoord.out.bam
+samtools index yHQL707.Aligned.sortedByCoord.out.bam
+samtools index yHQL720.Aligned.sortedByCoord.out.bam
+samtools index yHQL723.Aligned.sortedByCoord.out.bam
+samtools index yHQL725.Aligned.sortedByCoord.out.bam
+
+samtools index yHQL731.Aligned.sortedByCoord.out.bam
+samtools index yHQL735.Aligned.sortedByCoord.out.bam
+samtools index yHQL737.Aligned.sortedByCoord.out.bam
+samtools index yHQL739.Aligned.sortedByCoord.out.bam
+samtools index yHQL741.Aligned.sortedByCoord.out.bam
+samtools index yHQL746.Aligned.sortedByCoord.out.bam
+samtools index yHQL748.Aligned.sortedByCoord.out.bam
+samtools index yHQL749.Aligned.sortedByCoord.out.bam
+samtools index yHQL752.Aligned.sortedByCoord.out.bam
+samtools index yHQL753.Aligned.sortedByCoord.out.bam
+
+samtools index yHQL757.Aligned.sortedByCoord.out.bam
+samtools index ZIM2122.Aligned.sortedByCoord.out.bam
+samtools index ZP962.Aligned.sortedByCoord.out.bam
+samtools index ZP963.Aligned.sortedByCoord.out.bam
+samtools index ZP966.Aligned.sortedByCoord.out.bam
+samtools index CL1105.Aligned.sortedByCoord.out.bam
+samtools index CL458_Aligned.sortedByCoord.out.bam
+samtools index CL455_Aligned.sortedByCoord.out.bam
+samtools index CL309_Aligned.sortedByCoord.out.bam
+samtools index CL308_Aligned.sortedByCoord.out.bam
+
+samtools index CL1710_Aligned.sortedByCoord.out.bam
+samtools index CL1704_Aligned.sortedByCoord.out.bam
+samtools index CL1703_Aligned.sortedByCoord.out.bam
+samtools index CL1604_Aligned.sortedByCoord.out.bam
+samtools index CL304_Aligned.sortedByCoord.out.bam
+samtools index CL1600_Aligned.sortedByCoord.out.bam
+samtools index CL1509_Aligned.sortedByCoord.out.bam
+samtools index CL1507_Aligned.sortedByCoord.out.bam
+samtools index CL1506_Aligned.sortedByCoord.out.bam
+samtools index CL1431_Aligned.sortedByCoord.out.bam
+
+samtools index CL1429_Aligned.sortedByCoord.out.bam
+samtools index CL1422_Aligned.sortedByCoord.out.bam
+samtools index CL1305_Aligned.sortedByCoord.out.bam
+samtools index CL1208_Aligned.sortedByCoord.out.bam
+samtools index CL1206_Aligned.sortedByCoord.out.bam
+samtools index CECT10174.Aligned.sortedByCoord.out.bam
+samtools index CECT12627.Aligned.sortedByCoord.out.bam
+samtools index CECT12638.Aligned.sortedByCoord.out.bam
+samtools index CECT12669.Aligned.sortedByCoord.out.bam
+samtools index CECT12922.Aligned.sortedByCoord.out.bam
+
+
+samtools index CECT12930.Aligned.sortedByCoord.out.bam
+samtools index S14.Aligned.sortedByCoord.out.bam
+samtools index S20.Aligned.sortedByCoord.out.bam
+samtools index CBS2898.Aligned.sortedByCoord.out.bam
+samtools index CECT10618.Aligned.sortedByCoord.out.bam
+samtools index CBS431.Aligned.sortedByCoord.out.bam
+samtools index IIICF20.Aligned.sortedByCoord.out.bam
+samtools index IKM13.Aligned.sortedByCoord.out.bam
+samtools index NPCC1288.Aligned.sortedByCoord.out.bam
+samtools index NPCC1293.Aligned.sortedByCoord.out.bam
+
+samtools index NPCC1311.Aligned.sortedByCoord.out.bam
+samtools index NPCC1330.Aligned.sortedByCoord.out.bam
+samtools index Rag18112.Aligned.sortedByCoord.out.bam
+samtools index Rag20112.Aligned.sortedByCoord.out.bam
+samtools index Rag20125.Aligned.sortedByCoord.out.bam
+samtools index Rag20225.Aligned.sortedByCoord.out.bam
+samtools index NPCC1417.Aligned.sortedByCoord.out.bam
+samtools index NPCC1418.Aligned.sortedByCoord.out.bam
+samtools index CECT1369.Aligned.sortedByCoord.out.bam
+samtools index CECT1884.Aligned.sortedByCoord.out.bam
+
+samtools index NCAIM789.Aligned.sortedByCoord.out.bam
+samtools index NCAIM868.Aligned.sortedByCoord.out.bam
+samtools index S10.Aligned.sortedByCoord.out.bam
+samtools index SERIDA78.Aligned.sortedByCoord.out.bam
+samtools index ZIM2113.Aligned.sortedByCoord.out.bam
+
+#paso siguiente armar los VCF y los genomas
+
